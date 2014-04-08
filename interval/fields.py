@@ -61,9 +61,11 @@ def formatError(value):
 
 def relativedelta_topgsqlstring(value):
     # default for type(value) == timedelta
-    attrs = ['days', 'hours', 'minutes', 'seconds', 'microseconds']
-    if isinstance(value, relativedelta):
-        attrs.insert(0, 'months')
+    if isinstance(value, timedelta):
+        attrs = ['days', 'seconds', 'microseconds']
+    else:
+        attrs = ['months', 'days', 'hours', 'minutes', 'seconds',
+            'microseconds']
 
     buf = []
     for attr in attrs:
