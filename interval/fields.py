@@ -19,7 +19,7 @@ from lib.time_24_hour import time24hour
 
 from south.modelsinspector import add_introspection_rules
 
-months_re = re.compile('(\d+) months?')
+months_re = re.compile('(\d+) mont?h?s?')
 days_re = re.compile('(\d+) days?')
 hms_re = re.compile('(\d\d:\d\d:\d\d)')
 
