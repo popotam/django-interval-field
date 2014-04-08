@@ -29,6 +29,9 @@ def cast_interval(value, cur):
     """
     ret = relativedelta()
 
+    if not value:
+        return ret
+
     for month in months_re.findall(value):
         ret.months += int(month)
 
