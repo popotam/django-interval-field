@@ -7,6 +7,7 @@ from django.db import models
 from django.utils.text import capfirst
 from django.utils.translation import ugettext_lazy as _
 
+from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 
 from interval.forms import IntervalFormField
@@ -134,6 +135,8 @@ class IntervalField(models.Field):
             # psycopg2 will return a relativedelta() for INTERVAL type column
             # in database
             return value
+        if isinstance(value, timedelta):
+            return relativedelta(seconds=value.total_seconds())
 
         if value is None or value is '' or value is u'':
             return None
