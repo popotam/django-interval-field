@@ -1,10 +1,5 @@
 django-interval-field
 =====================
 
-INTERVAL field for PostgreSQL (and an approximation for other backends)
-
- * tested
- * internationalized
- * supports PostgreSQL, MySQL, SQLite
- * works with Dojango
- * example application included
+This is a fork of django-interval-field (https://github.com/mpasternak/django-interval-field)
+that supports '1 month'-type intervals using dateutil.relativedelta.
