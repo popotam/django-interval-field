@@ -61,7 +61,8 @@ def formatError(value):
 
 def relativedelta_topgsqlstring(value):
     buf = []
-    for attr in ['months', 'days', 'seconds', 'microseconds']:
+    for attr in ['months', 'days', 'hours', 'minutes', 'seconds',
+            'microseconds']:
         v = getattr(value, attr)
         if v:
             buf.append('%i %s' % (v, attr.upper()))
@@ -72,7 +73,9 @@ def relativedelta_topgsqlstring(value):
 
 def relativedelta_tobigint(value):
     return (
-        value.days * day_seconds * microseconds
+        # PostgreSQL assumes that 1 month = 30 days in such computations
+        value.months * 30 * day_seconds * microseconds
+        + value.days * day_seconds * microseconds
         + value.seconds * microseconds
         + value.microseconds
         )
