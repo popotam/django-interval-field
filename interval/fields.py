@@ -1,15 +1,53 @@
 # -*- encoding: utf-8 -*-
 
+import psycopg2
+import re
+
 from django.db import models
 from django.utils.text import capfirst
 from django.utils.translation import ugettext_lazy as _
 
-from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 from interval.forms import IntervalFormField
 
 day_seconds = 24 * 60 * 60
 microseconds = 1000000
+
+from lib.time_24_hour import time24hour
+
+from south.modelsinspector import add_introspection_rules
+
+months_re = re.compile('(\d+) months?')
+days_re = re.compile('(\d+) days?')
+hms_re = re.compile('(\d\d:\d\d:\d\d)')
+
+
+def cast_interval(value, cur):
+    """
+    Convert PostgreSQL string <value> to Python relativedelta.
+    """
+    ret = relativedelta()
+
+    for month in months_re.findall(value):
+        ret.months += int(month)
+
+    for day in days_re.findall(value):
+        ret.days += int(day)
+
+    for hms in hms_re.findall(value):
+        h, m, s = hms.split(':')
+        ret.hours += int(h)
+        ret.minutes += int(m)
+        ret.seconds += int(s)
+
+    return ret
+
+interval_oid = 1186  # interval column OID
+interval_type = psycopg2.extensions.new_type(
+    (interval_oid,), 'interval', cast_interval)
+psycopg2.extensions.register_type(interval_type)
+
 
 
 def formatError(value):
@@ -17,9 +55,9 @@ def formatError(value):
         "please use [[DD]D days,]HH:MM:SS[.ms] instead of %r" % value)
 
 
-def timedelta_topgsqlstring(value):
+def relativedelta_topgsqlstring(value):
     buf = []
-    for attr in ['days', 'seconds', 'microseconds']:
+    for attr in ['months', 'days', 'seconds', 'microseconds']:
         v = getattr(value, attr)
         if v:
             buf.append('%i %s' % (v, attr.upper()))
@@ -28,7 +66,7 @@ def timedelta_topgsqlstring(value):
     return " ".join(buf)
 
 
-def timedelta_tobigint(value):
+def relativedelta_tobigint(value):
     return (
         value.days * day_seconds * microseconds
         + value.seconds * microseconds
@@ -54,12 +92,12 @@ def range_check(value, name, min=None, max=None):
 
 
 class IntervalField(models.Field):
-    """This is a field, which maps to Python's datetime.timedelta.
+    """This is a field, which maps to Python's dateutil.relativedelta
 
     For PostgreSQL, its type is INTERVAL - a native interval type.
     - http://www.postgresql.org/docs/8.4/static/datatype-datetime.html
 
-    For other databases, its type is BIGINT and timedelta value is stored
+    For other databases, its type is BIGINT and relativedelta value is stored
     as number of seconds * 1000000 .
     """
 
@@ -89,8 +127,8 @@ class IntervalField(models.Field):
         return 'BIGINT'
 
     def to_python(self, value):
-        if isinstance(value, timedelta):
-            # psycopg2 will return a timedelta() for INTERVAL type column
+        if isinstance(value, relativedelta):
+            # psycopg2 will return a relativedelta() for INTERVAL type column
             # in database
             return value
 
@@ -134,12 +172,12 @@ class IntervalField(models.Field):
             ms = range_check(ms, "microseconds", 0, microseconds)
             ms = ms * (microseconds / (10 ** l))
 
-            return timedelta(
+            return relativedelta(
                 days=days, hours=h, minutes=m,
                 seconds=s, microseconds=ms)
 
         # other database backends:
-        return timedelta(seconds=float(value) / microseconds)
+        return relativedelta(seconds=float(value) / microseconds)
 
     def get_db_prep_value(self, value, connection, prepared=False):
         if value is None or value is '':
@@ -150,9 +188,9 @@ class IntervalField(models.Field):
             if isinstance(value, basestring):
                 # Can happen, when using south migrations
                 return value
-            return timedelta_topgsqlstring(value)
+            return relativedelta_topgsqlstring(value)
 
-        return timedelta_tobigint(value)
+        return relativedelta_tobigint(value)
 
     def formfield(self, form_class=IntervalFormField, **kwargs):
         defaults = {'min_value': self.min_value,
