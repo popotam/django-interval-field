@@ -154,7 +154,8 @@ class IntervalField(models.Field):
         # relativedelta(months=+1)
         if isinstance(value, basestring) and value.startswith('relativedelta'):
             val = value.replace('relativedelta(', '').strip(')')
-            kwargs = dict([tuple(x.split('=')) for x in val.split(',')])
+            strint = lambda x: (x[0], int(x[1]))
+            kwargs = dict([strint(x.split('=')) for x in val.split(',')])
             return relativedelta(**kwargs)
 
         # string forms: in form like "X days, HH:MM:SS.ms" (can be used in
