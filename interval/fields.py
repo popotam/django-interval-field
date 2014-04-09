@@ -150,6 +150,13 @@ class IntervalField(models.Field):
         if value is None or value is '' or value is u'':
             return None
 
+        # repr of relativedelta is of form
+        # relativedelta(months=+1)
+        if isinstance(value, basestring) and value.startswith('relativedelta'):
+            val = value.replace('relativedelta(', '').strip(')')
+            kwargs = dict([tuple(x.split('=')) for x in val.split(',')])
+            return relativedelta(**kwargs)
+
         # string forms: in form like "X days, HH:MM:SS.ms" (can be used in
         # fixture files)
         if isinstance(value, basestring) and value.find(":") >= 0:
