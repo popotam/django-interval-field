@@ -19,6 +19,7 @@ from lib.time_24_hour import time24hour
 
 from south.modelsinspector import add_introspection_rules
 
+years_re = re.compile('(\d+) years?')
 months_re = re.compile('(\d+) mont?h?s?')
 days_re = re.compile('(\d+) days?')
 hms_re = re.compile('(\d\d:\d\d:\d\d)')
@@ -32,6 +33,9 @@ def cast_interval(value, cur):
 
     if not value:
         return ret
+
+    for year in years_re.findall(value):
+        ret.years += int(year)
 
     for month in months_re.findall(value):
         ret.months += int(month)
@@ -64,7 +68,7 @@ def relativedelta_topgsqlstring(value):
     if isinstance(value, timedelta):
         attrs = ['days', 'seconds', 'microseconds']
     else:
-        attrs = ['months', 'days', 'hours', 'minutes', 'seconds',
+        attrs = ['years', 'months', 'days', 'hours', 'minutes', 'seconds',
             'microseconds']
 
     buf = []
