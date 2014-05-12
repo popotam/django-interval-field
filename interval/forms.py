@@ -6,6 +6,7 @@ from django.forms.util import ValidationError
 from django.utils.translation import ugettext as _
 from django.utils.datastructures import SortedDict
 from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 ENABLE_DOJANGO = False
 
@@ -46,6 +47,8 @@ class IntervalWidget(TextInput):
         check_format(self.format)
 
     def render(self, name, value, attrs=None):
+        if type(value) == relativedelta:
+            return unicode(value)
 
         if value is None:
             value = dict(days=0, hours=0, minutes=0, seconds=0, microseconds=0)
