@@ -22,6 +22,8 @@ else:
 
 
 format_desc = SortedDict([
+    ('y', 'years'),
+    ('m', 'months'),
     ('D', 'days'),
     ('H', 'hours'),
     ('M', 'minutes'),
@@ -41,17 +43,36 @@ class IntervalWidget(TextInput):
             'all': ('interval.css', ),
         }
 
-    def __init__(self, format='DHMSX', *args, **kw):
+    def __init__(self, format='ymDHMSX', *args, **kw):
         TextInput.__init__(self, *args, **kw)
         self.format = format
         check_format(self.format)
 
     def render(self, name, value, attrs=None):
-        if type(value) == relativedelta:
-            return unicode(value)
-
         if value is None:
-            value = dict(days=0, hours=0, minutes=0, seconds=0, microseconds=0)
+            value = dict(years=0, months=0, days=0, hours=0, minutes=0, seconds=0, microseconds=0)
+
+        if type(value) == relativedelta:
+            years = value.years
+            months = value.months
+            days = value.days
+            seconds = value.seconds
+            microseconds = value.microseconds
+            hours = minutes = 0
+
+            if 'H' in self.format:
+                hours = (seconds / 3600)
+                seconds = seconds - hours * 3600
+
+            if 'M' in self.format:
+                minutes = (seconds / 60)
+                seconds = seconds - minutes * 60
+
+            microseconds = value.microseconds
+
+            value = dict(years=years, months=months,
+                         days=days, hours=hours, minutes=minutes,
+                         seconds=seconds, microseconds=microseconds)
 
         if type(value) == timedelta:
             days = value.days
@@ -69,14 +90,16 @@ class IntervalWidget(TextInput):
 
             microseconds = value.microseconds
 
-            value = dict(days=days, hours=hours, minutes=minutes,
+            value = dict(years=0, months=0,
+                         days=days, hours=hours, minutes=minutes,
                          seconds=seconds, microseconds=microseconds)
 
         attrs = self.build_attrs(attrs)
 
         ret = []
         para = dict(
-            name=name, dojoType='', days_label=_('days'),
+            name=name, dojoType='', years_label=_('years'),
+            months_label=_('months'), days_label=_('days'),
             hours_label=_('hours'), minutes_label=_('minutes'),
             seconds_label=_('seconds'), microseconds_label=_('microseconds'))
         para.update(value)
@@ -134,7 +157,7 @@ class IntervalFormField(Field):
     dojo_type = 'dijit.form.NumberTextBox'
 
     def __init__(
-        self, format='DHMSX', min_value=None, max_value=None, *args, **kw):
+        self, format='ymDHMSX', min_value=None, max_value=None, *args, **kw):
         Field.__init__(self, *args, **kw)
         self.format = format
         self.min_value = min_value
@@ -143,7 +166,7 @@ class IntervalFormField(Field):
 
     def clean(self, value):
 
-        kw = dict(days=0, hours=0, minutes=0, seconds=0, microseconds=0)
+        kw = dict(years=0, months=0, days=0, hours=0, minutes=0, seconds=0, microseconds=0)
 
         for letter, desc in format_desc.items():
 
@@ -163,7 +186,9 @@ class IntervalFormField(Field):
                 raiseError(desc)
 
         try:
-            cleaned_value = timedelta(
+            cleaned_value = relativedelta(
+                years=kw['years'],
+                months=kw['months'],
                 days=kw['days'],
                 seconds=kw['seconds'],
                 minutes=kw['minutes'],
