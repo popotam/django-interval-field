@@ -222,7 +222,7 @@ class IntervalField(models.Field):
     def formfield(self, form_class=IntervalFormField, **kwargs):
         defaults = {'min_value': self.min_value,
                     'max_value': self.max_value,
-                    'format': self.format or 'DHMS',
+                    'format': self.format or 'ymDHMS',
                     'required': not self.blank,
                     'label': capfirst(self.verbose_name),
                     'help_text': self.help_text}
