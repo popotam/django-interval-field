@@ -58,18 +58,9 @@ class IntervalWidget(TextInput):
             days = value.days
             seconds = value.seconds
             microseconds = value.microseconds
-            hours = minutes = 0
-
-            if 'H' in self.format:
-                hours = (seconds / 3600)
-                seconds = seconds - hours * 3600
-
-            if 'M' in self.format:
-                minutes = (seconds / 60)
-                seconds = seconds - minutes * 60
-
+            hours = value.hours
+            minutes = value.minutes
             microseconds = value.microseconds
-
             value = dict(years=years, months=months,
                          days=days, hours=hours, minutes=minutes,
                          seconds=seconds, microseconds=microseconds)
