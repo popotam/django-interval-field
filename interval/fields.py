@@ -2,6 +2,7 @@
 
 import psycopg2
 import re
+from types import NoneType
 
 from django.db import models
 from django.utils.text import capfirst
@@ -11,6 +12,7 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 
 from interval.forms import IntervalFormField
+from interval.tools import cmp_relativedeltas
 
 day_seconds = 24 * 60 * 60
 microseconds = 1000000
@@ -133,8 +135,12 @@ class IntervalField(models.Field):
         self.max_value = max_value
         self.format = format
 
+        if not isinstance(self.min_value, (relativedelta, NoneType)):
+            raise TypeError('min_value must be a relativedelta or None')
+        if not isinstance(self.max_value, (relativedelta, NoneType)):
+            raise TypeError('max_value must be a relativedelta or None')
         if self.min_value is not None and self.max_value is not None:
-            if self.min_value >= self.max_value:
+            if cmp_relativedeltas(self.min_value, self.max_value) != -1:
                 raise ValueError('min_value >= max_value')
 
     def db_type(self, connection):
