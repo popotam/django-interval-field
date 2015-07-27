@@ -19,8 +19,6 @@ microseconds = 1000000
 
 from lib.time_24_hour import time24hour
 
-from south.modelsinspector import add_introspection_rules
-
 years_re = re.compile('(\d+) years?')
 months_re = re.compile('(\d+) mont?h?s?')
 days_re = re.compile('(\d+) days?')
